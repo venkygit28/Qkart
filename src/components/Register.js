@@ -1,3 +1,4 @@
+import { Password } from "@mui/icons-material";
 import { Button, CircularProgress, Stack, TextField } from "@mui/material";
 import { Box } from "@mui/system";
 import axios from "axios";
@@ -7,16 +8,12 @@ import { config } from "../App";
 import Footer from "./Footer";
 import Header from "./Header";
 import "./Register.css";
+import { useHistory, Link } from "react-router-dom";
 
 const Register = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const[data,setData] = useState({
-    username:"",
-    password:"",
-    confirmPassword:"",
-    isLoading:false
-  })
-  // TODO: CRIO_TASK_MODULE_REGISTER - Implement the register function
+
+
   /**
    * Definition for register handler
    * - Function to be called when the user clicks on the register button or submits the register form
@@ -24,14 +21,17 @@ const Register = () => {
    * @param {{ username: string, password: string, confirmPassword: string }} formData
    *  Object with values of username, password and confirm password user entered to register
    *
+   * 
    * API endpoint - "POST /auth/register"
    *
+   * 
    * Example for successful response from backend for the API call:
    * HTTP 201
    * {
    *      "success": true,
    * }
    *
+   * 
    * Example for failed response from backend for the API call:
    * HTTP 400
    * {
@@ -39,40 +39,36 @@ const Register = () => {
    *      "message": "Username is already taken"
    * }
    */
-  const register = async (formData) => {
-   setData((prev)=>({
-      ...prev,
-      isLoading:true
-    }))
-   if(validateInput(formData)){
-    axios.post(config.endpoint+"/auth/register",{"username":formData.username,"password":formData.password})
-    .then(response => {
-      console.log(response)
-      if(response.status === 201){
-        enqueueSnackbar("Registered successfully",{variant:'success'}) 
-        setData((prev)=>({
-          ...prev,
-          isLoading:false
-        }))
-      }
-    })
-    .catch(e=>{
-      if(e.response.status >=400 && e.response.status <500){
-        enqueueSnackbar(e.response.data.message,{variant:'error'})
-        setData((prev)=>({
-          ...prev,
-          isLoading:false
-        }))
-      }
-      else{
-        enqueueSnackbar("Something went wrong. Check that the backend is running, reachable and returns valid JSON.",{variant:'error'})
-        setData((prev)=>({
-          ...prev,
-          isLoading:false
-        }))
-      }
-    })
-  }
+
+  const [data,setData] = useState({username:"",password:"",confirmPassword:""});
+  const [loading, setLoading] = useState(false);
+  const history = useHistory();
+  const register = (formData) => {
+
+    
+
+    if(validateInput(formData)){
+      setLoading(true);
+      axios.post(`${config.endpoint}/auth/register`,{"username":formData.username,"password":formData.password})
+      .then(res =>{
+        enqueueSnackbar("Registration Successfull",{variant:'success'})
+        setLoading(false);
+        history.push("/login")
+      }).catch( err => {
+        try{
+          if(err.response.status>=400 && err.response.status<500){
+            enqueueSnackbar(err.response.data.message,{variant:'error'})
+          }
+          setLoading(false);
+        }
+        catch(err){
+          enqueueSnackbar("Something went wrong. Check that the backend is running, reachable and returns valid JSON.",{variant:'error'})
+          setLoading(false);
+        }
+      });
+    }    
+
+    
   };
 
   // TODO: CRIO_TASK_MODULE_REGISTER - Implement user input validation logic
@@ -93,41 +89,31 @@ const Register = () => {
    * -    Check that password field is not less than 6 characters in length - "Password must be at least 6 characters"
    * -    Check that confirmPassword field has the same value as password field - Passwords do not match
    */
-
-  
-  /**
-   * Validate the input values so that any bad or illegal values are not passed to the backend.
-   *
-   * @param {{ username: string, password: string, confirmPassword: string }} data
-   *  Object with values of username, password and confirm password user entered to register
-   *
-   * @returns {boolean}
-   *    Whether validation has passed or not
-   */
   const validateInput = (data) => {
-    if(data.username.length===0){
-      enqueueSnackbar("Username is a required field")
-      return false;
+    var flag=true;
+    if(data.username===""){
+    enqueueSnackbar("Username is a required field",{variant:'warning'})
+    return false;
     }
-    if(data.username.length <6) {
-     enqueueSnackbar("Username must be at least 6 characters")
-     return false
+    else if(data.username.length<6){
+    enqueueSnackbar("Username must be atleast 6 characters",{variant:'warning'})
+    return false;
     }
-    if(data.password.length===0) {
-      enqueueSnackbar("Password is a required field")
-      return false}
-    
-if(data.password.length <6) {
-  enqueueSnackbar("Password must be at least 6 characters")
-  return false
-}
-if(data.password !== data.confirmPassword) {
-  
-  enqueueSnackbar("Passwords do not match")
-  return false
-}
-return true
-};
+    else if(data.password===""){
+    enqueueSnackbar("Password is a required field",{variant:'warning'})
+    return false;
+    }
+    else if(data.password.length<6){
+    enqueueSnackbar("Password must be atleast 6 characters",{variant:'warning'})
+    return false;
+    }
+    else if(data.password!==data.confirmPassword){
+    enqueueSnackbar("Passwords do not match",{variant:'warning'})
+    return false;
+    }
+    return true;
+  };
+
 
   return (
     <Box
@@ -141,19 +127,20 @@ return true
         <Stack spacing={2} className="form">
           <h2 className="title">Register</h2>
           <TextField
-            id ="username"
+            id="username"
             label="Username"
             variant="outlined"
             title="Username"
             name="username"
             placeholder="Enter Username"
             fullWidth
+            value={data.username}
             onChange={(e)=>{
               setData((prev)=>({
                 ...prev,
                 username:e.target.value
-              }) )
-            } }
+              }));
+            }}
           />
           <TextField
             id="password"
@@ -164,11 +151,12 @@ return true
             helperText="Password must be atleast 6 characters length"
             fullWidth
             placeholder="Enter a password with minimum 6 characters"
+            value={data.password}
             onChange={(e)=>{
               setData((prev)=>({
                 ...prev,
                 password:e.target.value
-              }))
+              }));
             }}
           />
           <TextField
@@ -178,23 +166,23 @@ return true
             name="confirmPassword"
             type="password"
             fullWidth
-           onChange={(e)=>{
-            setData((prev)=>({
-              ...prev,
-              confirmPassword:e.target.value
-            }))
-           }}
+            value={data.confirmPassword}
+            onChange={(e)=>{
+              setData((prev)=>({
+                ...prev,
+                confirmPassword:e.target.value
+              }));
+            }}
           />
-           <Button className="button" variant="contained" onClick={()=>{register(data)}}>
-            {data.isLoading? 
-            <CircularProgress/>
-            :
-            <p>Register Now</p>
-            }     
-           </Button>
+          {loading ? <CircularProgress style={{margin: '10px auto'}}/> : 
+          <Button className="button" type="submit" variant="contained" onClick={()=>register(data)}>
+          Register
+         </Button>
+          }
+           
           <p className="secondary-action">
             Already have an account?{" "}
-             <a className="link" href="#">
+             <a className="link" href="/login">
               Login here
              </a>
           </p>
@@ -206,3 +194,4 @@ return true
 };
 
 export default Register;
+
