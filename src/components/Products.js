@@ -12,7 +12,7 @@ import axios from "axios";
 import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
 import { config } from "../App";
-// import Cart, {generateCartItemsFrom}  from "./Cart";
+import Cart, {generateCartItemsFrom}  from "./Cart";
 import Footer from "./Footer";
 import Header from "./Header";
 import ProductCard from "./ProductCard";
@@ -104,7 +104,7 @@ const Products = () => {
         setData(res.data);
         let fc = await fetchCart(token);
         // console.log("generate",generateCartItemsFrom(fc,res.data))
-        // setcartData(generateCartItemsFrom(fc,res.data));
+        setcartData(generateCartItemsFrom(fc,res.data));
         setLoad(false)
       })
       .catch(err=>{
@@ -232,7 +232,7 @@ const Products = () => {
       }
         try{
           const res=await axios.post(`${config.endpoint}/cart`,{"productId":productId,"qty":qty}, { headers: { 'Authorization': `Bearer ${token}` } })
-          // setcartData(generateCartItemsFrom(res.data,products))
+          setcartData(generateCartItemsFrom(res.data,products))
         }
           catch(err){
             console.log("error")
@@ -341,7 +341,7 @@ const Products = () => {
         <Grid container>
             <Grid >
               {/* {console.log(cartData)} */}
-              {/* <Cart products={data} items={cartData} handleQuantity={addToCart} /> */}
+              <Cart products={data} items={cartData} handleQuantity={addToCart} />
             </Grid>
         </Grid>
        ) : (
